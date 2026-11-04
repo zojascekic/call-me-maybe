@@ -3,6 +3,5 @@ __pycache__/
 .venv/
 .mypy_cache/
 data/output/
-scratch/
 .flake8
 .vscode
