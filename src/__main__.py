@@ -1,4 +1,7 @@
 import argparse
+import sys
+
+from src.io_utils import load_functions, load_prompts
 
 
 def parse_args() -> argparse.Namespace:
@@ -28,7 +31,17 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-args = parse_args()
-print(args.function_definition)
-print(args.input)
-print(args.output)
+def main() -> None:
+    args = parse_args()
+
+    try:
+        functions = load_functions(args.functions_definition)
+        prompts = load_prompts(args.input)
+    except ValueError as error:
+        print(f"Error: {error}", file=sys.stderr)
+        sys.exit(1)
+
+    print(f"Loaded {len(functions)} functions with {len(prompts)} prompts.")
+
+
+main()
