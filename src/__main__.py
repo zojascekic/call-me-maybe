@@ -1,7 +1,8 @@
 import argparse
 import sys
 
-from src.io_utils import load_functions, load_prompts
+from src.io_utils import load_functions, load_prompts, save_results
+from src.models import FunctionCallResult
 
 
 def parse_args() -> argparse.Namespace:
@@ -42,6 +43,25 @@ def main() -> None:
         sys.exit(1)
 
     print(f"Loaded {len(functions)} functions with {len(prompts)} prompts.")
+
+    first = functions[0]
+    results: list[FunctionCallResult] = []
+    for item in prompts:
+        results.append(
+            FunctionCallResult(
+                prompt=item.prompt,
+                name=first.name,
+                parameters={name: 0.0 for name in first.parameters},
+            )
+        )
+
+    try:
+        save_results(args.output, results)
+    except ValueError as error:
+        print(f"Error: {error}", file=sys.stderr)
+        sys.exit(1)
+
+    print(f"Wrote {len(results)} results to {args.output}")
 
 
 main()

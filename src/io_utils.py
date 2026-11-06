@@ -2,8 +2,9 @@ import json
 from typing import Any
 
 from pydantic import ValidationError
+from pathlib import Path
 
-from src.models import FunctionDefinition, PromptItem
+from src.models import FunctionDefinition, PromptItem, FunctionCallResult
 
 
 def load_json(path: str) -> Any:
@@ -44,3 +45,13 @@ def load_prompts(path: str) -> list[PromptItem]:
     except ValidationError as error:
         raise ValueError(f"Invalid prompt "
                          f"in {path}: {error}") from None
+
+
+def save_results(path: str, results: list[FunctionCallResult]) -> None:
+    data = [result.model_dump() for result in results]
+    try:
+        Path(path).parent.mkdir(parents=True, exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+    except OSError:
+        raise ValueError(f"Cannot write output file: {path}") from None
