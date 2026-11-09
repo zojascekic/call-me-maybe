@@ -1,6 +1,7 @@
 import numpy as np
 import numpy.typing as npt
 from llm_sdk import Small_LLM_Model
+from src.models import FunctionDefinition
 from src.constraints import (allowed_name_tokens, allowed_number_tokens,
                              is_complete_number)
 
@@ -69,3 +70,34 @@ def generate_number(
         return written
     raise ValueError(f"No complete number after "
                      f"{max_tokens} tokens: {written!r}")
+
+
+def generate_parameters(
+        model: Small_LLM_Model,
+        prompt_text: str,
+        function: FunctionDefinition,
+        token_table: list[str]
+        ) -> dict[str, float | int | str | bool]:
+    params: dict[str, float | int | str | bool] = {}
+    so_far = prompt_text + function.name + '", "parameters": {'
+    names = list(function.parameters)
+
+    for index, param in enumerate(names):
+        spec = function.parameters[param]
+        is_last = index == len(names) - 1
+        terminator = "}" if is_last else ","
+        so_far += f'"{param}": '
+
+        if spec.type in ("number", "integer"):
+            is_integer = True if spec.type == "integer" else False
+            ids = model.encode(so_far)[0].tolist()
+            text = generate_number(model, ids, is_integer,
+                                   terminator, token_table)
+            params[param] = int(text) if is_integer else float(text)
+            so_far += text + terminator
+        else:
+            params[param] = ""
+            so_far += '""' + terminator
+        if not is_last:
+            so_far += " "
+    return params

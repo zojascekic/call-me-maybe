@@ -5,7 +5,7 @@ from llm_sdk import Small_LLM_Model
 from src.io_utils import load_functions, load_prompts, save_results
 from src.vocabulary import build_token_table
 from src.prompting import build_prompt
-from src.generator import choose_function_name
+from src.generator import choose_function_name, generate_parameters
 from src.models import FunctionCallResult
 
 
@@ -66,7 +66,8 @@ def main() -> None:
             FunctionCallResult(
                 prompt=item.prompt,
                 name=fn_name,
-                parameters={param: 0.0 for param in chosen.parameters},
+                parameters=generate_parameters(model, prompt_text,
+                                               chosen, token_table),
             )
         )
 
