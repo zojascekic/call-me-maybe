@@ -1,12 +1,16 @@
 GOINFRE ?= /goinfre/$(USER)
+
+ifneq ($(wildcard /goinfre),)
 export UV_CACHE_DIR := $(GOINFRE)/.cache/uv
 export UV_PROJECT_ENVIRONMENT := $(GOINFRE)/.venvs/callmemaybe
 export HF_HOME := $(GOINFRE)/.cache/huggingface
 export MYPY_CACHE_DIR := $(GOINFRE)/.cache/mypy
 export TMPDIR := $(GOINFRE)/tmp
-unexport VIRTUAL_ENV
 $(shell mkdir -p $(TMPDIR))
+endif
 
+MYPY_CACHE_DIR ?= .mypy_cache
+unexport VIRTUAL_ENV
 .PHONY: install run debug clean lint lint-strict
 
 install:
