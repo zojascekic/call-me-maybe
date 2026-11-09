@@ -1,7 +1,8 @@
 import numpy as np
 import numpy.typing as npt
 from llm_sdk import Small_LLM_Model
-from src.constraints import allowed_name_tokens
+from src.constraints import (allowed_name_tokens, allowed_number_tokens,
+                             is_complete_number)
 
 
 def next_token_scores(
@@ -42,3 +43,29 @@ def choose_function_name(
         written += token_table[token_id]
 
     return written[:-1]
+
+
+def generate_number(
+        model: Small_LLM_Model,
+        prefix_ids: list[int],
+        is_integer: bool,
+        terminator: str,
+        token_table: list[str],
+        max_tokens: int = 20
+        ) -> str:
+    input_ids = list(prefix_ids)
+    written = ""
+
+    for _ in range(max_tokens):
+        scores = next_token_scores(model, input_ids)
+        allowed = allowed_number_tokens(written, is_integer,
+                                        terminator, token_table)
+        token_id = pick_allowed_token(scores, allowed)
+        input_ids.append(token_id)
+        written += token_table[token_id]
+        if written.endswith(terminator):
+            return written[:-1]
+    if is_complete_number(written, is_integer):
+        return written
+    raise ValueError(f"No complete number after "
+                     f"{max_tokens} tokens: {written!r}")

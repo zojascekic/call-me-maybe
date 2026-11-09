@@ -18,17 +18,17 @@ def allowed_name_tokens(
 
 def is_number_prefix(text: str, is_integer: bool) -> bool:
     if is_integer:
-        pattern = r"-?\d*"
+        pattern = r"-?[0-9]*"
     else:
-        pattern = r"-?(\d+(\.\d*)?)?"
+        pattern = r"-?([0-9]+(\.[0-9]*)?)?"
     return re.fullmatch(pattern, text) is not None
 
 
 def is_complete_number(text: str, is_integer: bool) -> bool:
     if is_integer:
-        pattern = r"-?\d+"
+        pattern = r"-?[0-9]+"
     else:
-        pattern = r"-?\d+(\.\d+)?"
+        pattern = r"-?[0-9]+(\.[0-9]+)?"
     return re.fullmatch(pattern, text) is not None
 
 
