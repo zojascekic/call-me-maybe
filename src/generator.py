@@ -3,7 +3,7 @@ import numpy.typing as npt
 from llm_sdk import Small_LLM_Model
 from src.models import FunctionDefinition
 from src.constraints import (allowed_name_tokens, allowed_number_tokens,
-                             is_complete_number)
+                             is_complete_number, allowed_string_tokens)
 
 
 def next_token_scores(
@@ -72,6 +72,27 @@ def generate_number(
                      f"{max_tokens} tokens: {written!r}")
 
 
+def generate_string(
+        model: Small_LLM_Model,
+        prefix_ids: list[int],
+        token_table: list[str],
+        max_tokens: int = 60
+        ) -> str:
+
+    input_ids = list(prefix_ids)
+    written = ""
+    allowed = allowed_string_tokens(token_table)
+
+    for _ in range(max_tokens):
+        scores = next_token_scores(model, input_ids)
+        token_id = pick_allowed_token(scores, allowed)
+        input_ids.append(token_id)
+        written += token_table[token_id]
+        if written.endswith('"'):
+            return written[:-1]
+    return written
+
+
 def generate_parameters(
         model: Small_LLM_Model,
         prompt_text: str,
@@ -96,8 +117,11 @@ def generate_parameters(
             params[param] = int(text) if is_integer else float(text)
             so_far += text + terminator
         else:
-            params[param] = ""
-            so_far += '""' + terminator
+            so_far += '"'
+            ids = model.encode(so_far)[0].tolist()
+            text = generate_string(model, ids, token_table)
+            params[param] = text
+            so_far += text + '"' + terminator
         if not is_last:
             so_far += " "
     return params
