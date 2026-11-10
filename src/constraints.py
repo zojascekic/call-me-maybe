@@ -50,3 +50,15 @@ def allowed_number_tokens(
             allowed_ids.append(token_id)
 
     return allowed_ids
+
+
+def allowed_string_tokens(token_table: list[str]) -> list[int]:
+    allowed_ids: list[int] = []
+    for token_id, text in enumerate(token_table):
+        if not text:
+            continue
+        if text == '"':
+            allowed_ids.append(token_id)
+        elif ('"' not in text and '\\' not in text and text.isprintable()):
+            allowed_ids.append(token_id)
+    return allowed_ids
