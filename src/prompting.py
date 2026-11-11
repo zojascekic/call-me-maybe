@@ -2,9 +2,15 @@ from src.models import FunctionDefinition
 
 
 def build_prompt(functions: list[FunctionDefinition], request: str) -> str:
-    fn_list = [f"{fn.name} - {fn.description}" for fn in functions]
+    lines: list[str] = []
+    for fn in functions:
+        params = ", ".join(
+            f"{name}: {spec.type}" for name, spec in fn.parameters.items()
+        )
+        lines.append(f"- {fn.name}({params}): {fn.description}")
     return (
         "Available functions:\n"
-        + "\n".join(fn_list)
+        + "\n".join(lines)
         + f"\nRequest: {request}"
-        + '\nCall: {"name": "')
+        + '\nCall: {"name": "'
+    )
