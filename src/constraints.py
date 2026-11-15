@@ -52,6 +52,21 @@ def allowed_number_tokens(
     return allowed_ids
 
 
+def scan_token(text: str, pending: bool) -> tuple[bool, bool, bool]:
+    for i, char in enumerate(text):
+        if pending:
+            if char == "\\" or char == '"':
+                pending = False
+            else:
+                return False, False, False
+        elif char == "\\":
+            pending = True
+        elif char == '"':
+            is_last = i == len(text) - 1
+            return is_last, False, is_last
+    return True, pending, False
+
+
 def allowed_string_tokens(token_table: list[str]) -> list[int]:
     allowed_ids: list[int] = []
     for token_id, text in enumerate(token_table):
