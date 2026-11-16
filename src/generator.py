@@ -28,6 +28,25 @@ def pick_allowed_token(
     return int(np.argmax(masked))
 
 
+def choose_from(
+        model: Small_LLM_Model,
+        prompt_ids: list[int],
+        targets: list[str],
+        token_table: list[str]
+        ) -> str:
+    input_ids = list(prompt_ids)
+    written = ""
+
+    while written not in targets:
+        scores = next_token_scores(model, input_ids)
+        allowed = allowed_name_tokens(written, targets, token_table)
+        token_id = pick_allowed_token(scores, allowed)
+        input_ids.append(token_id)
+        written += token_table[token_id]
+
+    return written
+
+
 def choose_function_name(
         model: Small_LLM_Model,
         prompt_ids: list[int],
@@ -35,17 +54,7 @@ def choose_function_name(
         token_table: list[str]
         ) -> str:
     targets = [name + '"' for name in names]
-    input_ids = list(prompt_ids)
-    written = ""
-
-    while not written.endswith('"'):
-        scores = next_token_scores(model, input_ids)
-        allowed = allowed_name_tokens(written, targets, token_table)
-        token_id = pick_allowed_token(scores, allowed)
-        input_ids.append(token_id)
-        written += token_table[token_id]
-
-    return written[:-1]
+    return choose_from(model, prompt_ids, targets, token_table)[:-1]
 
 
 def generate_number(
@@ -126,6 +135,12 @@ def generate_parameters(
             text = generate_number(model, ids, is_integer,
                                    terminator, token_table)
             params[param] = int(text) if is_integer else float(text)
+            so_far += text + terminator
+        elif spec.type == "boolean":
+            ids = model.encode(so_far)[0].tolist()
+            targets = ["true" + terminator, "false" + terminator]
+            text = choose_from(model, ids, targets, token_table)[:-1]
+            params[param] = text == "true"
             so_far += text + terminator
         else:
             so_far += '"'
