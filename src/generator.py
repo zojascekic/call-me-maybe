@@ -1,9 +1,11 @@
 import numpy as np
 import numpy.typing as npt
+import json
 from llm_sdk import Small_LLM_Model
 from src.models import FunctionDefinition
 from src.constraints import (allowed_name_tokens, allowed_number_tokens,
-                             is_complete_number, allowed_string_tokens)
+                             is_complete_number, allowed_string_tokens,
+                             scan_token)
 
 
 def next_token_scores(
@@ -76,20 +78,27 @@ def generate_string(
         model: Small_LLM_Model,
         prefix_ids: list[int],
         token_table: list[str],
+        allowed_normal: list[int],
+        allowed_pending: list[int],
         max_tokens: int = 60
         ) -> str:
 
     input_ids = list(prefix_ids)
     written = ""
-    allowed = allowed_string_tokens(token_table)
-
+    pending = False
     for _ in range(max_tokens):
         scores = next_token_scores(model, input_ids)
+        allowed = allowed_pending if pending else allowed_normal
         token_id = pick_allowed_token(scores, allowed)
+        text = token_table[token_id]
+        _, pending, index = scan_token(text, pending)
+        if index != -1:
+            return written + text[:index]
+        written += text
         input_ids.append(token_id)
-        written += token_table[token_id]
-        if written.endswith('"'):
-            return written[:-1]
+
+    if pending:
+        written = written[:-1]
     return written
 
 
@@ -103,6 +112,8 @@ def generate_parameters(
     so_far = prompt_text + function.name + '", "parameters": {'
     names = list(function.parameters)
 
+    allowed_normal = allowed_string_tokens(token_table, False, prompt_text)
+    allowed_pending = allowed_string_tokens(token_table, True, prompt_text)
     for index, param in enumerate(names):
         spec = function.parameters[param]
         is_last = index == len(names) - 1
@@ -119,8 +130,9 @@ def generate_parameters(
         else:
             so_far += '"'
             ids = model.encode(so_far)[0].tolist()
-            text = generate_string(model, ids, token_table)
-            params[param] = text
+            text = generate_string(model, ids, token_table,
+                                   allowed_normal, allowed_pending)
+            params[param] = json.loads('"' + text + '"')
             so_far += text + '"' + terminator
         if not is_last:
             so_far += " "

@@ -14,7 +14,9 @@ def build_prompt(functions: list[FunctionDefinition], request: str) -> str:
         '"parameters": {...}}, using double quotes. '
         "Choose the function that does what the request asks. "
         "Copy string values exactly as they appear in the request, "
-        "and keep each value as short as possible."
+        "and keep each value as short as possible. "
+        r'Inside a string, write a backslash as \\ and a double quote '
+        r'as \", for example "C:\\temp\\a.txt".'
     )
     user = (
         "Available functions:\n"

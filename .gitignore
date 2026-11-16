@@ -1,7 +1,33 @@
+# Python artifacts
 __pycache__/
-*.pyc
-.venv/
+*.py[cod]
+*.egg-info/
 .mypy_cache/
+.pytest_cache/
+
+# Virtual environment
+.venv/
+
+# Generated output (subject: "Do not include the output/ directory")
 data/output/
-.flake8
-.vscode
+output/
+
+# Local test programs (subject: "not submitted or graded")
+scratch/
+tests/
+
+# Local helper scripts (hard-coded local paths)
+grade.sh
+moulinette.sh
+run_moulinette.sh
+student_output*.json
+
+# Personal notes and project PDFs
+TODO.md
+evalsheet.pdf
+subject*.pdf
+
+# Editor / OS files
+.vscode/
+.idea/
+.DS_Store

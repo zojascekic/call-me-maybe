@@ -1,13 +1,22 @@
 from src.constraints import scan_token
 
-assert scan_token("abc", False) == (True, False, False)
-assert scan_token("\\", False) == (True, True, False)
-assert scan_token("\\\\", False) == (True, False, False)
-assert scan_token('\\"', False) == (True, False, False)
-assert scan_token('"', False) == (True, False, True)
-assert scan_token('"', True) == (True, False, False)
+# No quote, no backslash
+assert scan_token("abc", False) == (True, False, -1)
+
+# Backslash handling
+assert scan_token("\\", False) == (True, True, -1)
+assert scan_token("\\\\", False) == (True, False, -1)
+assert scan_token('\\"', False) == (True, False, -1)
+assert scan_token('"', True) == (True, False, -1)
+assert scan_token('",', True) == (True, False, -1)
+
+# Closing quote: third value is its position
+assert scan_token('"', False) == (True, False, 0)
+assert scan_token('",', False) == (True, False, 0)
+assert scan_token('abc"}', False) == (True, False, 3)
+
+# Invalid escapes
 assert scan_token("\\d", False)[0] is False
 assert scan_token("d", True)[0] is False
-assert scan_token('",', False)[0] is False
-assert scan_token('",', True) == (True, False, False)
+
 print("all passed")

@@ -52,28 +52,35 @@ def allowed_number_tokens(
     return allowed_ids
 
 
-def scan_token(text: str, pending: bool) -> tuple[bool, bool, bool]:
+def scan_token(text: str, pending: bool) -> tuple[bool, bool, int]:
     for i, char in enumerate(text):
         if pending:
             if char == "\\" or char == '"':
                 pending = False
             else:
-                return False, False, False
+                return False, False, -1
         elif char == "\\":
             pending = True
         elif char == '"':
-            is_last = i == len(text) - 1
-            return is_last, False, is_last
-    return True, pending, False
+            return True, False, i
+    return True, pending, -1
 
 
-def allowed_string_tokens(token_table: list[str]) -> list[int]:
+def allowed_string_tokens(
+        token_table: list[str],
+        pending: bool,
+        prompt_text: str
+        ) -> list[int]:
     allowed_ids: list[int] = []
     for token_id, text in enumerate(token_table):
         if not text:
             continue
-        if text == '"':
-            allowed_ids.append(token_id)
-        elif ('"' not in text and '\\' not in text and text.isprintable()):
+        ok, _, index = scan_token(text, pending)
+        if not ok:
+            continue
+        kept = text if index == -1 else text[:index]
+        if all(char.isprintable()
+               and (char.isascii() or char in prompt_text)
+               for char in kept):
             allowed_ids.append(token_id)
     return allowed_ids
