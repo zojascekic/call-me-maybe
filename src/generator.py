@@ -63,7 +63,7 @@ def generate_number(
         is_integer: bool,
         terminator: str,
         token_table: list[str],
-        max_tokens: int = 20
+        max_tokens: int = 50
         ) -> str:
     input_ids = list(prefix_ids)
     written = ""
@@ -77,10 +77,10 @@ def generate_number(
         written += token_table[token_id]
         if written.endswith(terminator):
             return written[:-1]
+    written = written.rstrip(".")
     if is_complete_number(written, is_integer):
         return written
-    raise ValueError(f"No complete number after "
-                     f"{max_tokens} tokens: {written!r}")
+    return "0"
 
 
 def generate_string(
@@ -147,8 +147,21 @@ def generate_parameters(
             ids = model.encode(so_far)[0].tolist()
             text = generate_string(model, ids, token_table,
                                    allowed_normal, allowed_pending)
-            params[param] = json.loads('"' + text + '"')
+            try:
+                params[param] = json.loads('"' + text + '"')
+            except json.JSONDecodeError:
+                params[param] = text
             so_far += text + '"' + terminator
         if not is_last:
             so_far += " "
     return params
+
+
+def default_parameters(
+        function: FunctionDefinition
+        ) -> dict[str, float | int | str | bool]:
+    defaults: dict[str, float | int | str | bool] = {
+        "number": 0.0, "integer": 0, "boolean": False, "string": ""
+    }
+    return {name: defaults[spec.type]
+            for name, spec in function.parameters.items()}

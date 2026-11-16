@@ -5,7 +5,8 @@ from llm_sdk import Small_LLM_Model
 from src.io_utils import load_functions, load_prompts, save_results
 from src.vocabulary import build_token_table
 from src.prompting import build_prompt
-from src.generator import choose_function_name, generate_parameters
+from src.generator import (choose_function_name, generate_parameters,
+                           default_parameters)
 from src.models import FunctionCallResult
 
 
@@ -48,28 +49,34 @@ def main() -> None:
 
     print(f"Loaded {len(functions)} functions with {len(prompts)} prompts.")
 
-    model = Small_LLM_Model()
-    size = len(model.get_logits_from_input_ids([0]))
-    token_table = build_token_table(model, size)
+    try:
+        model = Small_LLM_Model()
+        size = len(model.get_logits_from_input_ids([0]))
+        token_table = build_token_table(model, size)
+    except Exception as error:
+        print(f"Error: could not load the model {error}", file=sys.stderr)
+        sys.exit(1)
     names = [fn.name for fn in functions]
     by_name = {fn.name: fn for fn in functions}
 
     results: list[FunctionCallResult] = []
     for item in prompts:
-        prompt_text = build_prompt(functions, item.prompt)
-        prompt_ids = model.encode(prompt_text)[0].tolist()
-        fn_name = choose_function_name(model, prompt_ids, names, token_table)
-        print(f"{item.prompt} -> {fn_name}")
-
-        chosen = by_name[fn_name]
-        results.append(
-            FunctionCallResult(
-                prompt=item.prompt,
-                name=fn_name,
-                parameters=generate_parameters(model, prompt_text,
-                                               chosen, token_table),
-            )
-        )
+        chosen = functions[0]
+        try:
+            prompt_text = build_prompt(functions, item.prompt)
+            prompt_ids = model.encode(prompt_text)[0].tolist()
+            fn_name = choose_function_name(model, prompt_ids, names,
+                                           token_table)
+            chosen = by_name[fn_name]
+            parameters = generate_parameters(model, prompt_text,
+                                             chosen, token_table)
+        except Exception as error:
+            print(f"Warning: '{item.prompt}' failed ({error}), "
+                  f" using default values.", file=sys.stderr)
+            parameters = default_parameters(chosen)
+        print(f"{item.prompt} -> {chosen.name}")
+        results.append(FunctionCallResult(
+            prompt=item.prompt, name=chosen.name, parameters=parameters))
 
     try:
         save_results(args.output, results)
@@ -80,4 +87,9 @@ def main() -> None:
     print(f"Wrote {len(results)} results to {args.output}")
 
 
-main()
+if __name__ == "__main__":
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\nExecution interrupted.", file=sys.stderr)
+        sys.exit(1)
