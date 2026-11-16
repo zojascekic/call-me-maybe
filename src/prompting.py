@@ -16,7 +16,14 @@ def build_prompt(functions: list[FunctionDefinition], request: str) -> str:
         "Copy string values exactly as they appear in the request, "
         "and keep each value as short as possible. "
         r'Inside a string, write a backslash as \\ and a double quote '
-        r'as \", for example "C:\\temp\\a.txt".'
+        r'as \", for example "C:\\temp\\a.txt". '
+        r'as \", for example "C:\\temp\\a.txt". '
+        "If a parameter is a regular expression, write a pattern "
+        "that matches the described text, not a word: [0-9]+ matches "
+        "numbers, [a-zA-Z]+ matches words and [aeiouAEIOU] matches "
+        "vowels. If the request names a character in words, such as "
+        "asterisk, dash or underscore, write the character itself: "
+        "*, - or _."
     )
     user = (
         "Available functions:\n"
