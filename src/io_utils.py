@@ -8,6 +8,18 @@ from src.models import FunctionDefinition, PromptItem, FunctionCallResult
 
 
 def load_json(path: str) -> Any:
+    """Read and parse a JSON file.
+
+    Args:
+        path: Path to the JSON file.
+
+    Returns:
+        The parsed JSON data.
+
+    Raises:
+        ValueError: If the file is missing, cannot be read, or is not
+            valid JSON.
+    """
     try:
         with open(path, encoding="utf-8") as f:
             return json.load(f)
@@ -20,6 +32,19 @@ def load_json(path: str) -> Any:
 
 
 def load_functions(path: str) -> list[FunctionDefinition]:
+    """Load and validate the function definitions.
+
+    Args:
+        path: Path to a JSON file holding an array of function
+            definitions.
+
+    Returns:
+        The validated function definitions.
+
+    Raises:
+        ValueError: If the file cannot be loaded, is not a non-empty
+            array, or holds an invalid definition.
+    """
     data = load_json(path)
 
     if not isinstance(data, list):
@@ -35,6 +60,18 @@ def load_functions(path: str) -> list[FunctionDefinition]:
 
 
 def load_prompts(path: str) -> list[PromptItem]:
+    """Load and validate the prompts.
+
+    Args:
+        path: Path to a JSON file holding an array of prompt objects.
+
+    Returns:
+        The validated prompts.
+
+    Raises:
+        ValueError: If the file cannot be loaded, is not a non-empty
+            array, or holds an invalid prompt.
+    """
     data = load_json(path)
     if not isinstance(data, list):
         raise ValueError(f"{path} must contain a JSON array")
@@ -48,6 +85,17 @@ def load_prompts(path: str) -> list[PromptItem]:
 
 
 def save_results(path: str, results: list[FunctionCallResult]) -> None:
+    """Write the function call results to a JSON file.
+
+    Missing parent directories are created.
+
+    Args:
+        path: Path to the output file.
+        results: The results to write.
+
+    Raises:
+        ValueError: If the file cannot be written.
+    """
     data = [result.model_dump() for result in results]
     try:
         Path(path).parent.mkdir(parents=True, exist_ok=True)

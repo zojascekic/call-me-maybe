@@ -38,6 +38,17 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> None:
+    """Run the full pipeline from prompts to function calls.
+
+    Loads the function definitions and prompts, loads the model, then for
+    each prompt picks a function and generates its parameters with
+    constrained decoding. If a prompt fails, its parameters fall back to
+    default values. The results are written to the output file.
+
+    Raises:
+        SystemExit: If the input files cannot be loaded, the model cannot
+            be loaded, or the output file cannot be written.
+    """
     args = parse_args()
 
     try:

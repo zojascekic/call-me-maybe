@@ -12,6 +12,15 @@ def next_token_scores(
         model: Small_LLM_Model,
         input_ids: list[int]
         ) -> npt.NDArray[np.float64]:
+    """Get the model's scores for the next token.
+
+    Args:
+        model: The loaded language model.
+        input_ids: The token IDs seen so far.
+
+    Returns:
+        One logit per token in the vocabulary.
+    """
     logits = model.get_logits_from_input_ids(input_ids)
     scores = np.array(logits, dtype=np.float64)
     return scores
@@ -21,6 +30,18 @@ def pick_allowed_token(
         scores: npt.NDArray[np.float64],
         allowed_ids: list[int]
         ) -> int:
+    """Pick the highest-scoring token among the allowed ones.
+
+    Args:
+        scores: One logit per token in the vocabulary.
+        allowed_ids: IDs of the tokens that may be picked.
+
+    Returns:
+        The ID of the allowed token with the highest score.
+
+    Raises:
+        ValueError: If ``allowed_ids`` is empty.
+    """
     if not allowed_ids:
         raise ValueError("No allowed tokens.")
     masked = np.full_like(scores, -np.inf)
@@ -34,6 +55,21 @@ def choose_from(
         targets: list[str],
         token_table: list[str]
         ) -> str:
+    """Generate text that is forced to be one of the targets.
+
+    Args:
+        model: The loaded language model.
+        prompt_ids: Token IDs of the prompt to continue.
+        targets: The strings the output may become. None of them may be
+            a prefix of another.
+        token_table: Text of each token, indexed by token ID.
+
+    Returns:
+        The target the model generated.
+
+    Raises:
+        ValueError: If no token can continue toward a target.
+    """
     input_ids = list(prompt_ids)
     written = ""
 
@@ -53,6 +89,20 @@ def choose_function_name(
         names: list[str],
         token_table: list[str]
         ) -> str:
+    """Let the model choose one of the function names.
+
+    Each name is matched with its closing quote, so a name that is a
+    prefix of another is still chosen correctly.
+
+    Args:
+        model: The loaded language model.
+        prompt_ids: Token IDs of the prompt, ending just before the name.
+        names: The available function names.
+        token_table: Text of each token, indexed by token ID.
+
+    Returns:
+        The chosen function name.
+    """
     targets = [name + '"' for name in names]
     return choose_from(model, prompt_ids, targets, token_table)[:-1]
 
@@ -65,6 +115,21 @@ def generate_number(
         token_table: list[str],
         max_tokens: int = 50
         ) -> str:
+    """Generate a number value with constrained decoding.
+
+    Args:
+        model: The loaded language model.
+        prefix_ids: Token IDs of the text before the number.
+        is_integer: If True, only an integer may be generated.
+        terminator: The character that ends the number, such as ``,``
+            or ``}``.
+        token_table: Text of each token, indexed by token ID.
+        max_tokens: Maximum number of tokens to generate.
+
+    Returns:
+        The number as text, without the terminator. If no complete
+        number is produced within ``max_tokens``, returns ``"0"``.
+    """
     input_ids = list(prefix_ids)
     written = ""
 
@@ -91,7 +156,23 @@ def generate_string(
         allowed_pending: list[int],
         max_tokens: int = 60
         ) -> str:
+    """Generate the body of a JSON string with constrained decoding.
 
+    Generation stops at the first unescaped closing quote.
+
+    Args:
+        model: The loaded language model.
+        prefix_ids: Token IDs of the text up to the opening quote.
+        token_table: Text of each token, indexed by token ID.
+        allowed_normal: Tokens allowed when no escape is pending.
+        allowed_pending: Tokens allowed right after a backslash.
+        max_tokens: Maximum number of tokens to generate.
+
+    Returns:
+        The raw string body, still escaped and without the quotes. If
+        the limit is reached in the middle of an escape, the trailing
+        backslash is dropped.
+    """
     input_ids = list(prefix_ids)
     written = ""
     pending = False
@@ -117,6 +198,24 @@ def generate_parameters(
         function: FunctionDefinition,
         token_table: list[str]
         ) -> dict[str, float | int | str | bool]:
+    """Generate a value for every parameter of a function.
+
+    The parameters are generated one at a time, in order. Each value is
+    added to the JSON text that the next parameter is generated from.
+
+    Args:
+        model: The loaded language model.
+        prompt_text: The prompt, ending just before the function name.
+        function: The chosen function.
+        token_table: Text of each token, indexed by token ID.
+
+    Returns:
+        A mapping from each parameter name to its generated value.
+
+    Raises:
+        ValueError: If decoding reaches a state where no token is
+            allowed.
+    """
     params: dict[str, float | int | str | bool] = {}
     so_far = prompt_text + function.name + '", "parameters": {'
     names = list(function.parameters)
@@ -161,8 +260,19 @@ def generate_parameters(
 def default_parameters(
         function: FunctionDefinition
         ) -> dict[str, float | int | str | bool]:
+    """Build placeholder values for every parameter of a function.
+
+    Used when generation fails for a prompt.
+
+    Args:
+        function: The function to build values for.
+
+    Returns:
+        A mapping from each parameter name to a default for its type:
+        ``0.0``, ``0``, ``False`` or ``""``. Unknown types get ``""``.
+    """
     defaults: dict[str, float | int | str | bool] = {
         "number": 0.0, "integer": 0, "boolean": False, "string": ""
     }
-    return {name: defaults[spec.type]
+    return {name: defaults.get(spec.type, "")
             for name, spec in function.parameters.items()}
