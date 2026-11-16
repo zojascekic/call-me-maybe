@@ -76,8 +76,8 @@ def generate_number(
         input_ids.append(token_id)
         written += token_table[token_id]
         if written.endswith(terminator):
-            return written[:-1]
-    written = written.rstrip(".")
+            return written[:-1].strip()
+    written = written.strip().rstrip(".")
     if is_complete_number(written, is_integer):
         return written
     return "0"
@@ -127,7 +127,7 @@ def generate_parameters(
         spec = function.parameters[param]
         is_last = index == len(names) - 1
         terminator = "}" if is_last else ","
-        so_far += f'"{param}": '
+        so_far += f'"{param}":'
 
         if spec.type in ("number", "integer"):
             is_integer = True if spec.type == "integer" else False
@@ -135,15 +135,16 @@ def generate_parameters(
             text = generate_number(model, ids, is_integer,
                                    terminator, token_table)
             params[param] = int(text) if is_integer else float(text)
-            so_far += text + terminator
+            so_far += " " + text + terminator
         elif spec.type == "boolean":
+            so_far += " "
             ids = model.encode(so_far)[0].tolist()
             targets = ["true" + terminator, "false" + terminator]
             text = choose_from(model, ids, targets, token_table)[:-1]
             params[param] = text == "true"
             so_far += text + terminator
         else:
-            so_far += '"'
+            so_far += ' "'
             ids = model.encode(so_far)[0].tolist()
             text = generate_string(model, ids, token_table,
                                    allowed_normal, allowed_pending)

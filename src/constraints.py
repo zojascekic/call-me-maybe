@@ -42,7 +42,7 @@ def allowed_number_tokens(
     for token_id, text in enumerate(token_table):
         if not text:
             continue
-        candidate = written + text
+        candidate = (written + text).removeprefix(" ")
         if is_number_prefix(candidate, is_integer):
             allowed_ids.append(token_id)
         elif (is_complete_number(candidate[:-1], is_integer)
