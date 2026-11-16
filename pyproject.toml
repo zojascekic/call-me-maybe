@@ -1,7 +1,7 @@
 [project]
 name = "call-me-maybe"
 version = "0.1.0"
-description = "Add your description here"
+description = "Function calling with a small LLM: constrained decoding turns natural-language prompts into JSON function calls"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
