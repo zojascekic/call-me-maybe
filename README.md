@@ -51,13 +51,13 @@ make run            # same as: uv run python -m src
 
 By default, the program reads `data/input/functions_definition.json` and
 `data/input/function_calling_tests.json`, and writes
-`data/output/function_calls.json`. You can choose other files:
+`data/output/function_calling_results.json`. You can choose other files:
 
 ```sh
 uv run python -m src \
     --functions_definition data/input/functions_definition.json \
     --input data/input/function_calling_tests.json \
-    --output data/output/function_calls.json
+    --output data/output/function_calling_results.json
 ```
 
 ### Other Makefile rules
@@ -81,7 +81,7 @@ What is the sum of 2 and 3? -> fn_add_numbers
 Greet shrek -> fn_greet
 Reverse the string 'hello' -> fn_reverse_string
 ...
-Wrote 11 results to data/output/function_calls.json
+Wrote 11 results to data/output/function_calling_results.json
 ```
 
 ```json
