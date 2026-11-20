@@ -70,7 +70,9 @@ uv run python -m src \
 | `make clean`       | Removes `__pycache__`, `.mypy_cache` and other caches |
 
 On 42 machines, the Makefile keeps the virtual environment and the caches in
-`/goinfre` to stay under the home-directory quota.
+`/goinfre` to stay under the home-directory quota. Use `make install` and
+`make run` there: plain `uv sync` / `uv run` would put them in the home
+directory instead.
 
 ## Example usage
 
@@ -187,8 +189,8 @@ context, so the model sees `"a": 2, "b":` when it generates `b`.
   values that were already checked against the schema types.
 - **Accuracy:** 10/11 on the public set and 10/11 on the
   private moulinette set.
-- **Speed:** <!-- fill in -->about 46 s for the 11 public prompts on <machine>,
-  under the 300 s limit. Each generated token is one forward pass of the
+- **Speed:** about 2 minutes for the 11 public prompts on a 42 school PC
+  (CPU only, including model loading), under the 300 s limit. Each generated token is one forward pass of the
   model, and string values are capped at 60 tokens and numbers at 50.
 - **Reliability:** generation is deterministic (greedy decoding), so the same
   input gives the same output on every run.
@@ -228,23 +230,14 @@ context, so the model sees `"a": 2, "b":` when it generates `b`.
 
 ## Resources
 
-### Language models and decoding
 
 - [How to generate text: using different decoding methods (Hugging Face)](https://huggingface.co/blog/how-to-generate)
 - [Byte-Pair Encoding tokenization (Hugging Face LLM course)](https://huggingface.co/learn/llm-course/en/chapter6/5)
 - [Qwen3-0.6B model card](https://huggingface.co/Qwen/Qwen3-0.6B)
-- [Efficient Guided Generation for Large Language Models (Willard & Louf, 2023)](https://arxiv.org/abs/2307.09702)
-- [GBNF grammars in llama.cpp](https://github.com/ggml-org/llama.cpp/blob/master/grammars/README.md)
-
-### Python and tools
-
 - [Python regular expressions (W3Schools)](https://www.w3schools.com/python/python_regex.asp)
-- [`re` module documentation](https://docs.python.org/3/library/re.html)
 - [JSON specification](https://www.json.org/json-en.html)
-- [Pydantic documentation](https://docs.pydantic.dev/latest/)
 - [NumPy `argmax`](https://numpy.org/doc/stable/reference/generated/numpy.argmax.html)
 - [uv documentation](https://docs.astral.sh/uv/)
-- [Google Python style guide: docstrings](https://google.github.io/styleguide/pyguide.html#38-comments-and-docstrings)
 
 ### Use of AI
 
@@ -253,6 +246,7 @@ AI (Claude) was used for:
 - Writing the Google-style docstrings in `src/` and the project description
   in `pyproject.toml`.
 - Drafting this README from the code, the subject and the commit history.
-- <!-- add anything else, e.g. explaining concepts or debugging -->
-
-The algorithm, the constraints and the rest of the code were written by me.
+- Explaining concepts (tokenization, logits, constrained decoding) and
+  reviewing my code.
+- Preparing the evaluation: a test checklist, extra test prompts and the
+  steps to run the moulinette.
